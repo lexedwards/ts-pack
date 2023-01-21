@@ -1,22 +1,22 @@
-import { extname, resolve, dirname, join } from 'node:path';
+import { extname, resolve, dirname } from 'node:path';
 import { cwd } from 'node:process';
-import { type Plugin as RollupPlugin } from 'rollup';
+import { Plugin as RollupPlugin } from 'rollup';
 import {
-  type FilterPattern as RollupFilterPattern,
-  createFilter as rollupCreateFilter
+  FilterPattern as RollupFilterPattern,
+  createFilter as rollupCreateFilter,
 } from '@rollup/pluginutils';
 
 import {
   JscTarget,
-  type Options as SwcOptions,
-  type JsMinifyOptions,
+  Options as SwcOptions,
+  Config as SwcConfig,
   transform as swcTransform,
-  minify as swcMinify
+  minify as swcMinify,
 } from '@swc/core';
 import {
   fileExists,
   isDirectory,
-  resolveFile
+  resolveFile,
 } from '../fileSystem/verification';
 
 import dm from '@fastify/deepmerge';
@@ -24,20 +24,36 @@ import { replaceByClonedSource } from '../deepmerge';
 
 const deepmerge = dm({
   all: true,
-  mergeArray: replaceByClonedSource
+  mergeArray: replaceByClonedSource,
 });
 
 interface ConfigureTransformOptions {
-  tsConfig: {
+  include?: RollupFilterPattern;
+  exclude?: RollupFilterPattern;
+  tsConfig?: {
     importHelpers?: boolean;
+    jsx: string;
+    experimentalDecorators: boolean;
+    emitDecoratorMetadata: boolean;
+    jsxImportSource: string;
+    jsxFactory: string;
+    jsxFragmentFactory: string;
+    target: string;
+    baseUrl: string;
+    paths: Record<string, string[]>;
   };
+  swcConfig?: SwcConfig;
 }
 
-function configureTransform(): RollupPlugin['transform'] {
+function configureTransform({
+  tsConfig,
+  swcConfig,
+  ...options
+}: ConfigureTransformOptions = {}): RollupPlugin['transform'] {
   return async function transform(code, id) {
     const filter = rollupCreateFilter(
       options.include || /\.[mc]?[jt]sx?$/,
-      options.exclude || /node_modules/
+      options.exclude || /node_modules/,
     );
     if (!filter(id)) {
       return null;
@@ -52,60 +68,59 @@ function configureTransform(): RollupPlugin['transform'] {
     // https://github.com/swc-project/swc/pull/5661
     // Respect "preserve" after swc adds the support
     const useReact17NewTransform =
-      tsconfigOptions.jsx === 'react-jsx' ||
-      tsconfigOptions.jsx === 'react-jsxdev';
+      tsConfig?.jsx === 'react-jsx' || tsConfig?.jsx === 'react-jsxdev';
 
-    const swcConfig: SwcOptions = {
+    const swcConfigFromTsConfig: SwcOptions = {
       jsc: {
-        externalHelpers: tsconfigOptions.importHelpers,
+        externalHelpers: tsConfig?.importHelpers,
         parser: {
           syntax: isTypeScript ? 'typescript' : 'ecmascript',
           tsx: isTypeScript ? isTsx : undefined,
           jsx: !isTypeScript ? isJsx : undefined,
-          decorators: tsconfigOptions.experimentalDecorators
+          decorators: tsConfig?.experimentalDecorators,
         },
         transform: {
-          decoratorMetadata: tsconfigOptions.emitDecoratorMetadata,
+          decoratorMetadata: tsConfig?.emitDecoratorMetadata,
           react: {
             runtime: useReact17NewTransform ? 'automatic' : 'classic',
-            importSource: tsconfigOptions.jsxImportSource,
-            pragma: tsconfigOptions.jsxFactory,
-            pragmaFrag: tsconfigOptions.jsxFragmentFactory,
-            development:
-              tsconfigOptions.jsx === 'react-jsxdev' ? true : undefined
-          }
+            importSource: tsConfig?.jsxImportSource,
+            pragma: tsConfig?.jsxFactory,
+            pragmaFrag: tsConfig?.jsxFragmentFactory,
+            development: tsConfig?.jsx === 'react-jsxdev' ? true : undefined,
+          },
         },
-        target: tsconfigOptions.target?.toLowerCase() as JscTarget | undefined,
-        baseUrl: tsconfigOptions.baseUrl,
-        paths: tsconfigOptions.paths
-      }
+        target: tsConfig?.target?.toLowerCase() as JscTarget | undefined,
+        baseUrl: tsConfig?.baseUrl,
+        paths: tsConfig?.paths,
+      },
     };
 
-    const {
-      filename: _1, // We will use `id` from rollup instead
-      include: _2, // Rollup's filter is incompatible with swc's filter
-      exclude: _3,
-      tsconfig: _4, // swc doesn't have tsconfig option
-      minify: _5, // We will disable minify during transform, and perform minify in renderChunk
-      ...restSwcOptions
-    } = options;
+    // const {
+    //   exclude: _3,
+    //   minify: _5, // We will disable minify during transform, and perform minify in renderChunk
+    //   ...restSwcOptions
+    // } = swcConfig;
 
-    const swcOption = deepmerge<SwcOptions[]>(swcConfig, restSwcOptions, {
-      jsc: {
-        minify: undefined // Disable minify on transform, do it on renderChunk
+    const swcOption = deepmerge<SwcOptions[]>(
+      swcConfigFromTsConfig,
+      // restSwcOptions,
+      {
+        jsc: {
+          minify: undefined, // Disable minify on transform, do it on renderChunk
+        },
+        filename: id,
+        minify: false, // Disable minify on transform, do it on renderChunk
       },
-      filename: id,
-      minify: false // Disable minify on transform, do it on renderChunk
-    });
+    );
 
     const { code: transformedCode, ...rest } = await swcTransform(
       code,
-      swcOption
+      swcOption,
     );
 
     return {
       ...rest,
-      code: transformedCode
+      code: transformedCode,
     };
   };
 }
@@ -125,7 +140,7 @@ function configureResolveId(): RollupPlugin['resolveId'] {
       let file = await resolveFile({
         resolved,
         include: INCLUDE_REGEXP,
-        extensions: ACCEPTED_EXTENSIONS
+        extensions: ACCEPTED_EXTENSIONS,
       });
       if (file) return file;
       if (
@@ -137,7 +152,7 @@ function configureResolveId(): RollupPlugin['resolveId'] {
           resolved,
           index: true,
           include: INCLUDE_REGEXP,
-          extensions: ACCEPTED_EXTENSIONS
+          extensions: ACCEPTED_EXTENSIONS,
         });
         if (file) return file;
       }
@@ -145,7 +160,7 @@ function configureResolveId(): RollupPlugin['resolveId'] {
   };
 }
 
-function configureRenderChunk(): RollupPlugin['renderChunk'] {
+function configureRenderChunk(options: SwcConfig): RollupPlugin['renderChunk'] {
   return function renderChunk(code: string) {
     if (
       options.minify ||
@@ -159,11 +174,13 @@ function configureRenderChunk(): RollupPlugin['renderChunk'] {
   };
 }
 
-export function swc(): RollupPlugin {
+export interface RollupSwcOptions {}
+
+export function swc(options?: RollupSwcOptions): RollupPlugin {
   return {
     name: 'rollup-plugin-swc',
     resolveId: configureResolveId(),
     transform: configureTransform(),
-    renderChunk: configureRenderChunk()
+    renderChunk: configureRenderChunk({ minify: true }),
   };
 }
