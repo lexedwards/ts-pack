@@ -7,6 +7,7 @@
     "outDir": "dist",
     "sourceMap": false,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "allowJs": false,
     "lib": ["ESNext"],
     "noUnusedLocals": true,
@@ -18,5 +19,9 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
   },
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+  "ts-node": {
+    "swc": true,
+    "transpileOnly": true
+  }
 }

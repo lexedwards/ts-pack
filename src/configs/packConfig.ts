@@ -11,25 +11,30 @@ const deepmerge = dm({
 
 const argsReturn = parseArgs({
   options: {
-    noVerify: {
+    help: {
       type: 'boolean',
+      short: 'h',
+    },
+    doctor: {
+      type: 'boolean',
+      short: 'd',
     },
     tsConfig: {
       type: 'string',
       short: 'c',
     },
-    formats: {
+    inputFile: {
       type: 'string',
-      short: 'f',
+      short: 'i',
     },
   },
 });
 
 const pkgSchema = z.object({
-  noVerify: z.boolean().optional(),
+  help: z.boolean().optional(),
+  doctor: z.boolean().optional(),
   tsConfig: z.string().optional(),
-  formats: z.string().optional(),
-  entryPoint: z.string().optional(),
+  inputFile: z.string().optional(),
 });
 
 async function parsePackConfigFromPkgJson(pkgJson: unknown) {
@@ -43,29 +48,27 @@ async function parsePackConfigFromPkgJson(pkgJson: unknown) {
 }
 
 const DEFAULT_CONFIG: z.infer<typeof pkgSchema> = {
-  formats: 'cjs,esm',
-  noVerify: true,
+  help: false,
+  doctor: false,
   tsConfig: 'tsconfig.json',
-  entryPoint: 'src/index.js',
+  inputFile: 'src/index.ts',
 };
 
 const aggregateSchema = z.object({
-  noVerify: z.boolean(),
+  help: z.boolean().optional(),
+  doctor: z.boolean(),
   tsConfig: z.string(),
-  formats: z.enum(['esm', 'cjs']).array(),
-  entryPoint: z.string(),
+  inputFile: z.string(),
 });
 
 export async function getAggregatedConfig(pkgJson: unknown) {
   const fromPkgJson = await parsePackConfigFromPkgJson(pkgJson);
   const combinedConfig = deepmerge(fromPkgJson, { ...argsReturn.values });
   const aggregate = {
-    formats: String(combinedConfig.formats || DEFAULT_CONFIG.formats).split(
-      ',',
-    ),
-    noVerify: (combinedConfig.noVerify ??= DEFAULT_CONFIG.noVerify),
+    help: combinedConfig.help || DEFAULT_CONFIG.help,
+    doctor: (combinedConfig.doctor ??= DEFAULT_CONFIG.doctor),
     tsConfig: combinedConfig.tsConfig || DEFAULT_CONFIG.tsConfig,
-    entryPoint: combinedConfig.entryPoint || DEFAULT_CONFIG.entryPoint,
+    inputFile: combinedConfig.inputFile || DEFAULT_CONFIG.inputFile,
   };
   return aggregateSchema.parse(aggregate);
 }
