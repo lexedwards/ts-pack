@@ -15,7 +15,7 @@ const packRules = [
       logResult(result, `Input file configured`);
       if (!result) {
         logWarning(
-          `Pack is using a default configuration for it's input file (${DEFAULT_CONFIG.inputFile})`,
+          `TS-Pack is using a default configuration for it's input file (${DEFAULT_CONFIG.inputFile})`,
         );
       }
     },
@@ -40,7 +40,7 @@ const packRules = [
       logResult(result, `Typescript configured`);
       if (!result) {
         logWarning(
-          `Pack is using a default configuration for it's typescript (${DEFAULT_CONFIG.tsConfig})`,
+          `TS-Pack is using a default configuration for it's typescript (${DEFAULT_CONFIG.tsConfig})`,
         );
       }
     },
@@ -58,7 +58,7 @@ const packRules = [
 ];
 
 export async function inspectPackConfigs(pkgJson: Record<string, unknown>) {
-  console.info(green(`📦 Verifying Pack Config... \n`));
+  console.info(green(`📦 Verifying TS-Pack Config... \n`));
   const packConfig = await getAggregatedConfig(pkgJson);
 
   packRules.forEach(async (rule) =>

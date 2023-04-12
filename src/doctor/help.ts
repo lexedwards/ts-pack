@@ -2,7 +2,7 @@ import pkgjson from '../../package.json' assert { type: 'json' };
 
 export async function help() {
   console.info(`
-  Pack v${pkgjson.version}
+  TS-Pack v${pkgjson.version}
 
   A preconfigured bundler using local package.json + tsconfig.json to bundle your library.
 

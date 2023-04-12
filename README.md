@@ -1,4 +1,4 @@
-# Pack
+# TS-Pack
 
 A preconfigured [rollup.js]() bundler for Typescript Libraries, with additional aid to help configure the library's `package.json`.
 
@@ -38,7 +38,7 @@ For an [NPM]() library, package.json is **the** informer of what your library is
 Example terminal output from Doctor:
 
 ```
-🩺 Running Pack: Verifying Package.json...
+🩺 Running TS-Pack: Verifying Package.json...
 
 ES Module Package Detected
 

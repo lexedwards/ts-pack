@@ -11,7 +11,7 @@ async function pack() {
   const pkgJson = await getPkgJson(currentDirectory);
   const packConfig = await getAggregatedConfig(pkgJson);
   console.info(
-    `\n🚀 ${cyan('Running Pack:')} ${pkgJson.name}@${pkgJson.version}\n`,
+    `\n🚀 ${cyan('Running TS-Pack:')} ${pkgJson.name}@${pkgJson.version}\n`,
   );
 
   if (packConfig.help) {

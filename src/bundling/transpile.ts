@@ -81,7 +81,7 @@ export async function transpile() {
     );
   } catch (error) {
     buildFailed = true;
-    console.error(`Pack Error:`, error);
+    console.error(`TS-Pack Error:`, error);
   }
   await bundle.close();
   if (unresolvedImports.size) {

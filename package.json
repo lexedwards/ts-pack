@@ -1,12 +1,15 @@
 {
-  "name": "@lexedwards/pack",
+  "name": "@lexedwards/ts-pack",
   "version": "1.0.0",
-  "description": "",
-  "keywords": [],
-  "author": "",
+  "description": "Preconfigured bundler for Typescript Libraries",
+  "keywords": ["rollup", "typescript", "bundler"],
+  "author": "Alex Edwards <alex@alexedwards.co> (https://alexedwards.co/)",
   "license": "ISC",
   "bin": {
-    "pack": "bin/pack.mjs"
+    "ts-pack": "bin/pack.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "prebuild": "rm -rf dist",

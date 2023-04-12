@@ -39,8 +39,8 @@ const pkgSchema = z.object({
 
 export async function parsePackConfigFromPkgJson(pkgJson: unknown) {
   if (typeof pkgJson !== 'object') return {};
-  if (!(`pack` in pkgJson)) return {};
-  const verifiedConfig = await pkgSchema.safeParseAsync(pkgJson.pack);
+  if (!(`ts-pack` in pkgJson)) return {};
+  const verifiedConfig = await pkgSchema.safeParseAsync(pkgJson['ts-pack']);
   if (verifiedConfig.success) {
     return verifiedConfig.data;
   }
