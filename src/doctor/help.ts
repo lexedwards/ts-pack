@@ -4,13 +4,13 @@ export async function help() {
   console.info(`
   Pack v${pkgjson.version}
 
-  A preconfigured bundler for typescript libraries
+  A preconfigured bundler using local package.json + tsconfig.json to bundle your library.
 
   Configurations via flags or package.json:
     --help, -h, pack.help
         Display this message
 
-    --verify, -v, pack.verify
+    --doctor, -d, pack.doctor
         Perform a check on package.json's configuration
 
     --tsConfig, -c, pack.tsConfig

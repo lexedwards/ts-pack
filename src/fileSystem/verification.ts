@@ -1,6 +1,8 @@
 import { access, stat } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { join } from 'node:path';
+import { logError } from '../std';
+import { exit } from 'node:process';
 
 export async function fileExists(path: string) {
   try {
@@ -8,6 +10,14 @@ export async function fileExists(path: string) {
     return true;
   } catch (error) {
     return false;
+  }
+}
+
+export async function assertFile(path: string, file: string) {
+  const exists = await fileExists(join(path, file));
+  if (!exists) {
+    logError(`NOT FOUND: "${file}" was not found in "${path}"`);
+    exit(1);
   }
 }
 
@@ -22,7 +32,7 @@ export async function resolveFile({
   resolved,
   index = false,
   include,
-  extensions
+  extensions,
 }: ResolveFileOptions) {
   const fileWithoutExt = resolved.replace(include, '');
 

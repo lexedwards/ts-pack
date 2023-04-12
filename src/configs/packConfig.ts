@@ -37,7 +37,7 @@ const pkgSchema = z.object({
   inputFile: z.string().optional(),
 });
 
-async function parsePackConfigFromPkgJson(pkgJson: unknown) {
+export async function parsePackConfigFromPkgJson(pkgJson: unknown) {
   if (typeof pkgJson !== 'object') return {};
   if (!(`pack` in pkgJson)) return {};
   const verifiedConfig = await pkgSchema.safeParseAsync(pkgJson.pack);
@@ -47,7 +47,7 @@ async function parsePackConfigFromPkgJson(pkgJson: unknown) {
   return {};
 }
 
-const DEFAULT_CONFIG: z.infer<typeof pkgSchema> = {
+export const DEFAULT_CONFIG: z.infer<typeof pkgSchema> = {
   help: false,
   doctor: false,
   tsConfig: 'tsconfig.json',
@@ -61,7 +61,11 @@ const aggregateSchema = z.object({
   inputFile: z.string(),
 });
 
-export async function getAggregatedConfig(pkgJson: unknown) {
+export type PackConfig = z.infer<typeof aggregateSchema>;
+
+export async function getAggregatedConfig(
+  pkgJson: unknown,
+): Promise<PackConfig> {
   const fromPkgJson = await parsePackConfigFromPkgJson(pkgJson);
   const combinedConfig = deepmerge(fromPkgJson, { ...argsReturn.values });
   const aggregate = {
