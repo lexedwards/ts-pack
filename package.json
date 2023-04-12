@@ -2,7 +2,11 @@
   "name": "@lexedwards/ts-pack",
   "version": "1.0.0",
   "description": "Preconfigured bundler for Typescript Libraries",
-  "keywords": ["rollup", "typescript", "bundler"],
+  "keywords": [
+    "rollup",
+    "typescript",
+    "bundler"
+  ],
   "author": "Alex Edwards <alex@alexedwards.co> (https://alexedwards.co/)",
   "license": "ISC",
   "bin": {
